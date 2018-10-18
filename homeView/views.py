@@ -14,7 +14,7 @@ from .serializer import HealthDataSerializer
 
 
 def index(request):
-    return render(request, 'homeView/react.html')
+    return render(request, 'homeView/index.html')
 
 
 class HealthDataDetailView(CsrfExemptMixin, APIView):
