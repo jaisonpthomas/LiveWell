@@ -1,0 +1,23 @@
+body {
+  background: #cbd8f1;
+}
+
+/*CUSTOM*/
+.main-color-bg {
+  background-color: #28548d !important;
+  color: white;
+}
+
+.panel-color-custom {
+  background-color: #5d99e7 !important;
+  color: white;
+}
+
+/*HEADER*/
+#header {
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+#header .create {
+  padding-top: 20px;
+}

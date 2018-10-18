@@ -1,0 +1,433 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LiveWell | Symptom Tracker</title>
+    <!--React Files-->
+    <script src="{% static 'homeView/js/react/react.min.js' %}"></script>
+    <script src="{% static 'homeView/js/react/react-dom.min.js' %}"></script>
+    <script src="{% static 'homeView/js/react/browser.min.js' %}"></script>
+    <!--Chart.js CDN-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+    <script src="https://lib.arvancloud.com/ar/react-chartjs-2/2.7.4/react-chartjs-2.min.js"></script>
+    <!--Bootstrap + Custom CSS-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'homeView/css/homeView.css' %}" type="text/css">
+</head>
+
+<body>
+    <div id="App"></div>
+
+    <script type="text/babel">
+        //HealthData Component displays/updates wellnessScore, symptoms, relevant Factors
+        let HealthData = React.createClass({
+            getInitialState: function() {
+                return {
+                    editing: false,
+                }; 
+            },
+            edit: function() {
+                this.setState({editing: true});
+            },
+            save: function() {
+                let newWellnessScore = this.refs.wellnessScore.value;
+                let newSymptoms = this.refs.symptoms.value;
+                let newRelevantFactors = this.refs.relevantFactors.value
+                this.setState({
+                    editing: false,
+                    wellnessScore: newWellnessScore,
+                    symptoms: newSymptoms,
+                    relevantFactors: newRelevantFactors
+                });
+
+                let url = `http://127.0.0.1:8000/api/${this.props.date}`;
+                 
+                let data = {
+                    dateVal: this.props.date,
+                    score: newWellnessScore,
+                    symptoms: newSymptoms,
+                    relevantFactors: newRelevantFactors
+                };
+                fetch(url,
+                {
+                    method: 'POST', 
+                    body: JSON.stringify(data), 
+                    headers:{
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(response => console.log(JSON.stringify(response) + " Performing PUT request. "))
+                .catch(error => console.error('Error:', error));
+                fetch(url,
+                {
+                    method: 'PUT', 
+                    body: JSON.stringify(data),
+                    headers:{
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(response => console.log(JSON.stringify(response)))
+                .catch(error => console.error('Error:', error));  
+            },
+            getHealthData: function() {
+                fetch(`http://127.0.0.1:8000/api/${this.props.date}`)
+                    .then(results => results.json())
+                    .then(results => this.setState({
+                            editing: false,
+                            wellnessScore: results.score,
+                            symptoms: results.symptoms,
+                            relevantFactors: results.relevantFactors
+                        }))
+            },
+            renderReadOnly: function() {
+                return (
+                        <div>
+                            <div className="row">
+                                <div className="col-xs-3">
+                                    <label>Wellness Score (1-10)</label>
+                                </div>
+                                <div className="col-xs-9">
+                                    {this.state.wellnessScore}
+                                </div>
+                            </div>
+                            <hr />
+                            <div className="row">
+                                <div className="col-xs-3">
+                                    <label>Symptoms</label>
+                                </div>
+                                <div className="col-xs-9">
+                                    {this.state.symptoms}
+                                </div>
+                            </div>
+                            <hr />
+                            <div className="row">
+                                <div className="col-xs-3">
+                                    <label>Relevant Factors</label>
+                                </div>
+                                <div className="col-xs-9">
+                                    {this.state.relevantFactors}
+                                </div>
+                            </div>
+                            <br />
+                            <button onClick={this.edit} type="button" className="btn btn-default">Edit</button>
+                        </div>
+                );
+            },
+            formSubmit: function(e) {
+                e.preventDefault();
+                let userScore = this.refs.wellnessScore.value;
+                if (!userScore)
+                    alert("Wellness Score Required");
+                else if(userScore < 1 || userScore > 10)
+                    alert("Wellness Score must be between 1 and 10");
+                else
+                    this.save();
+            },
+            renderEdit: function() {
+                return (
+                        <div>
+                            <form>
+                                <div className="form-group">
+                                    <div className="row">
+                                        <div className="col-xs-3">
+                                            <label>Wellness Score (1-10)</label>
+                                        </div>
+                                        <div className="col-xs-9">
+                                            <input autofocus ref="wellnessScore" type="number" min="1" max="10" className="form-control" placeholder="1: Worst,  10: Best"
+                                                 defaultValue={this.state.wellnessScore} required />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <div className="row">
+                                        <div className="col-xs-3">
+                                            <label>Symptoms</label>
+                                        </div>
+                                        <div className="col-xs-9">
+                                            <input ref="symptoms" type="text" className="form-control"
+                                            placeholder="Fatigue, Headache..." defaultValue={this.state.symptoms} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <div className="row">
+                                        <div className="col-xs-3">
+                                            <label>Relevant Factors</label>
+                                        </div>
+                                        <div className="col-xs-9">
+                                            <input ref="relevantFactors" type="text" autocomplete className="form-control"
+                                            placeholder="New foods, medications, exercise..." defaultValue={this.state.relevantFactors}/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br />
+                                <button onClick={this.formSubmit} type="submit" className="btn btn-primary">Submit</button>
+                            </form>
+                        </div>
+                );
+            },
+            componentDidUpdate: function(prevProps) {
+                if(this.props.date != prevProps.date)
+                    this.getHealthData();
+            },
+            componentDidMount: function() {
+                this.getHealthData();
+            },
+            render: function() {
+                if (this.state.editing) {
+                    return this.renderEdit();
+                } else {
+                    return this.renderReadOnly();
+                }
+            }
+        });
+
+        let Header = React.createClass({
+            render: function() {
+                return (
+                    <header id="header" className="main-color-bg">
+                        <div className="container">
+                            <h1><span className="glyphicon glyphicon-stats" aria-hidden="true"></span> LiveWell - Symptom Tracker</h1>
+                        </div>
+                    </header>
+                )
+            }
+        });
+        let DateSelector = React.createClass({
+            dateChange: function(e) {
+                e.preventDefault();
+                let newDate = this.refs.dateField.value;
+                this.props.dateChange(newDate);
+
+                let nextButton = this.refs.dateSubmit;
+                nextButton.focus();
+            },
+            render: function() {
+                return(
+                    <div className="panel panel-default" ref="datePanel">
+                        <div className="panel-heading panel-color-custom">
+                            <h3 className="panel-title panel-color-custom">Date</h3>
+                        </div>
+                        <div className="panel-body">
+                            <form onSubmit={this.dateChange}>
+                                <input type="date" ref="dateField" id="dateField" defaultValue={this.props.date} onblur={this.dateChange}/>
+                                <br /><br />
+                                <button ref = "dateSubmit" onClick={this.dateChange} type="submit" 
+                                className="btn btn-default">Select Date</button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+        });
+        let TopRow = React.createClass({
+            getInitialState: function() {
+                let today = new Date();
+                let dd = today.getDate();
+                let mm = today.getMonth()+1; //January is 0!
+                let yyyy = today.getFullYear();
+                if(dd<10) {
+                    dd = '0'+dd
+                } 
+                if(mm<10) {
+                    mm = '0'+mm
+                }
+                today = yyyy + '-' + mm + '-'+ dd;
+                return ({
+                    date: today
+                });
+            },
+            dateChange: function(newDate) {
+                this.setState({date: newDate});
+            },
+            render: function() {
+                return (
+                    <div>
+                        <div className="row">
+                            <div className="col-md-3">
+                                <DateSelector dateChange={this.dateChange} date={this.state.date}/>
+                            </div>
+                            <div className="col-md-9">
+                                <div className="panel panel-default ">
+                                    <div className="panel-heading panel-color-custom">
+                                        <h3 className="panel-title panel-color-custom">Health Data</h3>
+                                    </div>
+                                    <div className="panel-body">
+                                        <HealthData date={this.state.date}/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        });
+        let FullApp = React.createClass({
+            render: function() {
+                return (
+                    <div>
+                        <Header/>
+                        <div className="container">
+                            <TopRow/>                            
+                        </div>
+                    </div>
+                )
+            }
+        });
+        ReactDOM.render(<FullApp/>, document.getElementById("App"));
+    </script>
+
+
+
+
+    <div class="container">
+        <hr />
+        <div class="panel panel-default ">
+            <div class="panel-heading panel-color-custom">
+                <h3 class="panel-title panel-color-custom">Charts</h3>
+            </div>
+            <div class="panel-body">
+                <canvas style="background-color: white;" id="myChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let myChart = document.getElementById('myChart').getContext('2d');
+        let dateCreator = function (apiCall) {
+            let dateArray = [];
+            for (i = 13; i >= 0; i--) {
+                let newDate = new Date();
+                newDate.setDate(newDate.getDate() - i);
+                let dd = newDate.getDate();
+                let mm = newDate.getMonth() + 1; //January is 0!
+                let yyyy = newDate.getFullYear();
+                if (dd < 10) {
+                    dd = '0' + dd
+                }
+                if (mm < 10) {
+                    mm = '0' + mm
+                }
+                if (apiCall) {
+                    newDate = yyyy + '-' + mm + '-' + dd;
+                    dateArray.push(newDate);
+                } else {
+                    newDate = mm + '/' + dd;
+                    dateArray.push(newDate);
+                }
+            }
+            return dateArray;
+        };
+
+
+        function addData(chart, label, data) {
+            chart.data.labels.push(label);
+            chart.data.datasets.forEach((dataset) => {
+                dataset.data.push(data);
+            });
+            chart.update();
+        }
+
+        let getDateValues = async function () {
+            let scores = [];
+            let symptoms = [];
+            let relevantFactors = []
+            let dateList = dateCreator(apiCall = true);
+            for (i = 0; i < dateList.length; i++) {
+                await fetch(`http://127.0.0.1:8000/api/${dateList[i]}`)
+                    .then(results => results.json())
+                    .then(results => {
+                        scores.push(results.score);
+                        symptoms.push(results.symptoms);
+                        relevantFactors.push(results.relevantFactors);
+                        addData(wellnessChart, dateList[i].slice(5, 11), results.score);
+                    }
+                    )
+            }
+            return { scores: scores, symptoms: symptoms, relevantFactors: relevantFactors };
+        };
+
+
+        // Global Options
+        Chart.defaults.global.defaultFontSize = 18;
+        Chart.defaults.global.defaultFontColor = '#777';
+        let dateData = getDateValues();
+
+
+        let wellnessChart = new Chart(myChart, {
+            type: 'line', // bar, horizontalBar, pie, line, doughnut, radar, polarArea
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'score',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(63, 127, 191, 0.8)',
+                    ],
+                    borderWidth: 1,
+                    borderColor: '#777',
+                    hoverBorderWidth: 3,
+                    hoverBorderColor: '#000'
+                }]
+            },
+            tooltipItems: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            options: {
+                title: {
+                    display: true,
+                    text: 'Your Wellness - Past 14 Days',
+                    fontSize: 25
+                },
+                legend: {
+                    display: false,
+                },
+                layout: {
+                    padding: {
+                        left: 50,
+                        right: 50,
+                        bottom: 30,
+                        top: 30
+                    }
+                },
+                tooltips: {
+                    custom: function (tooltip) {
+                        if (!tooltip) return;
+                        tooltip.displayColors = false;
+                    },
+                    footerFontSize: 12,
+                    enabled: true,
+                    callbacks: {
+                        label: function (tooltipItem, data) {
+                            return tooltipItem.yLabel;
+                        }
+                        /*,
+                        footer: function (tooltipItems, data) {
+                            return ["SYMPTOMS:   " + tooltipItems.index, "RELEVANT FACTORS:   " + 'API_CALL'];
+                        }*/
+                    }
+                },
+                scales: {
+                    yAxes: [{
+                        display: true,
+                        ticks: {
+                            suggestedMin: 1,
+                            max: 10
+                        }
+                    }]
+                }
+            }
+        });
+
+
+    </script>
+
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+</body>
+
+</html>
