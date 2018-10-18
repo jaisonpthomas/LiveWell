@@ -1,5 +1,7 @@
 # LiveWell Symptom Tracker
 
+![alt text](https://raw.githubusercontent.com/jaisonpthomas/LiveWell-Symptom-Tracker/master/homePage.png "homepage")
+
 Full Stack Application allowing users to track syptoms, wellness, and relevant Factors over time.
 
 Built with Django backend, React frontend with Chart.js for data visualization.
