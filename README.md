@@ -2,11 +2,11 @@
 
 ![alt text](https://raw.githubusercontent.com/jaisonpthomas/LiveWell-Symptom-Tracker/master/homePage.png "homepage")
 
-Full Stack Application allowing users to track syptoms, wellness, and relevant Factors over time.
+Full Stack Application allowing users to track symptoms, wellness, and relevant factors of illness over time.
 
-Built with Django backend, React frontend with Chart.js for data visualization.
+Built with Django back-end and React front-end with Chart.js for data visualization.
 
-##### Future Optimizations
+#### Future Optimizations
 + calendar for date selector
 + custom tooltips pulling symptoms and relevant factors into Chart
 + discrete category-list addition of symptoms and relevant Factors
